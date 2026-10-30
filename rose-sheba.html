@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rose for Sheba</title>
+<style>
+  :root { --red:#ff2a55; --deep:#7a0018; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 58%, #1c0007 0%, #070002 55%, #000 100%);
+    color:#fff; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    overflow:hidden; height:100dvh;
+  }
+
+  /* ---------- Intro card ---------- */
+  #intro {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:min(86vw, 320px); padding:28px 22px; text-align:center; z-index:20;
+    background:rgba(22,6,11,.88); border:1px solid rgba(255,40,85,.25); border-radius:18px;
+    box-shadow:0 0 50px rgba(255,0,60,.18), inset 0 0 30px rgba(255,0,60,.05);
+    transition:opacity .8s ease, transform .8s ease;
+  }
+  #intro.hide { opacity:0; transform:translate(-50%,-50%) scale(.9); pointer-events:none; }
+  #intro .ico { font-size:2.4rem; filter:drop-shadow(0 0 10px rgba(255,0,60,.7)); animation:beat 1.6s ease-in-out infinite; }
+  #intro h1 { font-family:Georgia,"Times New Roman",serif; font-size:1.35rem; margin:10px 0 4px; letter-spacing:.04em; }
+  #intro p { font-size:.78rem; color:#d9a3b0; margin-bottom:14px; }
+  .bar { height:3px; border-radius:3px; background:#3a0a15; overflow:hidden; margin-bottom:18px; }
+  .bar::after { content:""; display:block; height:100%; width:40%; background:linear-gradient(90deg,transparent,var(--red),transparent); animation:slide 1.6s linear infinite; }
+  #bloomBtn {
+    border:none; cursor:pointer; color:#fff; font-weight:700; letter-spacing:.08em; font-size:.74rem;
+    padding:13px 22px; border-radius:999px; background:linear-gradient(#ff2050,#c2002f);
+    box-shadow:0 6px 22px rgba(255,0,70,.45); transition:transform .2s, box-shadow .2s;
+  }
+  #bloomBtn:hover { transform:translateY(-2px) scale(1.03); box-shadow:0 10px 28px rgba(255,0,70,.6); }
+  #bloomBtn:active { transform:scale(.97); }
+
+  /* ---------- Name ---------- */
+  #name {
+    position:absolute; top:5dvh; left:0; right:0; text-align:center; z-index:10; pointer-events:none;
+  }
+  #name .letters {
+    font-family:"Playfair Display", Georgia, "Times New Roman", serif;
+    font-size:clamp(2.4rem, 12vw, 4.8rem); font-weight:700; letter-spacing:.22em; padding-left:.22em;
+    display:inline-block;
+  }
+  #name .letters span {
+    display:inline-block; opacity:0; color:#fff;
+    text-shadow:0 0 12px rgba(255,60,100,.9), 0 0 32px rgba(255,0,60,.6), 0 0 60px rgba(255,0,60,.35);
+  }
+  .go #name .letters span {
+    animation:
+      nameIn 1.4s calc(5.6s + var(--i) * .22s) cubic-bezier(.2,.9,.3,1) forwards,
+      floaty 3.2s calc(7.3s + var(--i) * .2s) ease-in-out infinite alternate;
+  }
+  #name .sub {
+    margin-top:6px; font-style:italic; font-size:.95rem; color:#ff9fb4; letter-spacing:.12em; opacity:0;
+  }
+  .go #name .sub { animation:fadeUp 1.4s 7.6s ease-out forwards; }
+
+  /* ---------- Stage / Rose ---------- */
+  #glow {
+    position:absolute; left:50%; top:43dvh; width:80vmin; height:80vmin; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,0,55,.42), rgba(255,0,55,.12) 45%, transparent 68%);
+    transform:translate(-50%,-50%) scale(.2); opacity:0; pointer-events:none;
+  }
+  .go #glow { animation:glowIn 3.4s 2.8s ease-out forwards, glowPulse 3s 6.2s ease-in-out infinite alternate; }
+
+  svg#rose { position:absolute; bottom:3dvh; left:50%; transform:translateX(-50%); height:78dvh; max-width:100vw; overflow:visible; }
+
+  #stem { fill:none; stroke:url(#sg); stroke-width:7; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; opacity:0; }
+  .go #stem { animation:grow 2.2s .7s ease-out forwards; }
+
+  .leaf { transform:scale(0); transform-origin:0 0; fill:url(#lg); stroke:rgba(120,255,150,.15); stroke-width:.8; }
+  .go .leaf { animation:leaf 1s var(--d) cubic-bezier(.2,.9,.3,1.1) forwards; }
+
+  .calyx { transform:scale(0); transform-origin:0 0; fill:#146b29; }
+  .go .calyx { animation:leaf .9s 2.7s ease-out forwards; }
+
+  .pt { transform:rotate(var(--r)) scale(.05); opacity:0; transform-origin:0 0; }
+  .go .pt { animation:bloom 1.7s var(--d) cubic-bezier(.2,.8,.3,1.12) forwards; }
+  .go #sway { animation:sway 5s 7s ease-in-out infinite alternate; }
+  #sway { transform-origin:0 0; }
+
+  /* ---------- Falling petals & hearts ---------- */
+  .fp {
+    position:fixed; width:14px; height:18px; z-index:5; pointer-events:none; opacity:0;
+    background:linear-gradient(135deg,#ff3a60,#8a0020); border-radius:150% 0 150% 0;
+    animation:fall var(--t) linear forwards;
+  }
+  .heart {
+    position:fixed; z-index:6; pointer-events:none; color:#ff5878; opacity:0;
+    text-shadow:0 0 10px rgba(255,40,90,.8); animation:rise var(--t) ease-out forwards;
+  }
+
+  #replay {
+    position:fixed; right:14px; bottom:14px; z-index:30; width:40px; height:40px; border-radius:50%;
+    border:1px solid rgba(255,60,100,.4); background:rgba(30,6,12,.7); color:#ff8aa5; font-size:1.1rem;
+    cursor:pointer; opacity:0; pointer-events:none; transition:opacity .6s;
+  }
+  #replay.show { opacity:1; pointer-events:auto; }
+
+  /* ---------- Keyframes ---------- */
+  @keyframes beat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+  @keyframes slide { from{transform:translateX(-100%)} to{transform:translateX(260%)} }
+  @keyframes grow { from{stroke-dashoffset:1;opacity:1} to{stroke-dashoffset:0;opacity:1} }
+  @keyframes leaf { to{transform:scale(1)} }
+  @keyframes bloom {
+    from { transform:rotate(calc(var(--r) - 35deg)) scale(.05); opacity:0; }
+    25%  { opacity:1; }
+    to   { transform:rotate(var(--r)) scale(var(--s)); opacity:1; }
+  }
+  @keyframes glowIn { to{transform:translate(-50%,-50%) scale(1); opacity:1} }
+  @keyframes glowPulse { from{filter:brightness(1)} to{filter:brightness(1.35)} }
+  @keyframes sway { from{transform:rotate(-1.6deg)} to{transform:rotate(1.6deg)} }
+  @keyframes nameIn {
+    from { opacity:0; transform:translateY(70px) scale(.5); filter:blur(14px); }
+    to   { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+  }
+  @keyframes floaty { from{transform:translateY(0)} to{transform:translateY(-12px)} }
+  @keyframes fadeUp { from{opacity:0; transform:translateY(10px)} to{opacity:.9; transform:none} }
+  @keyframes fall {
+    0%   { opacity:0; transform:translate(0,0) rotate(0); }
+    10%  { opacity:1; }
+    100% { opacity:0; transform:translate(var(--x), 58dvh) rotate(var(--rot)); }
+  }
+  @keyframes rise {
+    0%   { opacity:0; transform:translateY(0) scale(.6); }
+    20%  { opacity:1; }
+    100% { opacity:0; transform:translateY(-26dvh) scale(1.2); }
+  }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="ico">🌹</div>
+  <h1>Loading Love</h1>
+  <p>Ready to bloom for you ♥</p>
+  <div class="bar"></div>
+  <button id="bloomBtn">আস্তে চাপ দাও বউজান 🥹♥</button>
+</div>
+
+<div id="name">
+  <div class="letters" aria-label="SHEBA">
+    <span style="--i:0">S</span><span style="--i:1">H</span><span style="--i:2">E</span><span style="--i:3">B</span><span style="--i:4">A</span>
+  </div>
+  <div class="sub">a rose, only for you(যদিও তোমার ফুল পছন্দ না জানি)♥</div>
+</div>
+
+<div id="glow"></div>
+
+<svg id="rose" viewBox="0 0 400 620" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0c4a1a"/><stop offset="1" stop-color="#2fa04a"/></linearGradient>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d4a1d"/><stop offset="1" stop-color="#27994a"/></linearGradient>
+    <linearGradient id="p1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f0010"/><stop offset="1" stop-color="#d81a3a"/></linearGradient>
+    <linearGradient id="p2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#66001a"/><stop offset="1" stop-color="#f02a4d"/></linearGradient>
+    <linearGradient id="p3" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7a0020"/><stop offset="1" stop-color="#ff4262"/></linearGradient>
+    <linearGradient id="p4" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#8c0024"/><stop offset="1" stop-color="#ff6482"/></linearGradient>
+  </defs>
+
+  <path id="stem" pathLength="1" d="M200 612 C 196 520, 206 400, 200 232"/>
+
+  <g transform="translate(201,478)"><path class="leaf" style="--d:2.2s" d="M0,0 C30,-34 84,-40 110,-18 C86,14 32,20 0,0Z"/></g>
+  <g transform="translate(199,420)"><path class="leaf" style="--d:2.5s" d="M0,0 C-30,-34 -84,-40 -110,-18 C-86,14 -32,20 0,0Z"/></g>
+  <g transform="translate(200,240)"><ellipse class="calyx" rx="28" ry="12"/></g>
+
+  <g transform="translate(200,215)"><g id="sway"><g id="petals" transform="scale(1,.88)"></g></g></g>
+</svg>
+
+<button id="replay" title="Replay">↻</button>
+
+<script>
+(function () {
+  // Build rose petals (outer layers bloom last, inner layers first)
+  var NS = 'http://www.w3.org/2000/svg';
+  var D = 'M0,0 C-46,-18 -58,-78 -22,-98 C-8,-106 8,-106 22,-98 C58,-78 46,-18 0,0Z';
+  var layers = [
+    { n:7, s:1.00, off:0,  fill:'p1', d:4.55 },
+    { n:6, s:0.82, off:26, fill:'p2', d:4.20 },
+    { n:5, s:0.64, off:12, fill:'p3', d:3.85 },
+    { n:4, s:0.46, off:40, fill:'p4', d:3.50 },
+    { n:3, s:0.30, off:0,  fill:'p4', d:3.15 }
+  ];
+  var g = document.getElementById('petals');
+  layers.forEach(function (L) {
+    for (var i = 0; i < L.n; i++) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', D);
+      p.setAttribute('class', 'pt');
+      p.setAttribute('fill', 'url(#' + L.fill + ')');
+      p.setAttribute('stroke', 'rgba(255,170,190,.28)');
+      p.setAttribute('stroke-width', '.8');
+      var r = L.off + i * (360 / L.n) + (Math.random() * 8 - 4);
+      p.style.setProperty('--r', r.toFixed(1) + 'deg');
+      p.style.setProperty('--s', L.s);
+      p.style.setProperty('--d', (L.d + i * 0.06).toFixed(2) + 's');
+      g.appendChild(p);
+    }
+  });
+
+  var intro = document.getElementById('intro');
+  var replay = document.getElementById('replay');
+  var fxTimer = null, heartTimer = null;
+
+  function spawnPetal() {
+    var el = document.createElement('div');
+    el.className = 'fp';
+    var cx = window.innerWidth / 2;
+    el.style.left = (cx + (Math.random() * 140 - 70)) + 'px';
+    el.style.top = '40dvh';
+    el.style.setProperty('--t', (5 + Math.random() * 4).toFixed(1) + 's');
+    el.style.setProperty('--x', (Math.random() * 200 - 100).toFixed(0) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+    el.style.transform = 'scale(' + (0.6 + Math.random() * 0.8).toFixed(2) + ')';
+    el.addEventListener('animationend', function () { el.remove(); });
+    document.body.appendChild(el);
+  }
+  function spawnHeart() {
+    var el = document.createElement('span');
+    el.className = 'heart';
+    el.textContent = '♥';
+    el.style.left = (15 + Math.random() * 70) + 'vw';
+    el.style.top = (30 + Math.random() * 25) + 'dvh';
+    el.style.fontSize = (10 + Math.random() * 16) + 'px';
+    el.style.setProperty('--t', (3 + Math.random() * 3).toFixed(1) + 's');
+    el.addEventListener('animationend', function () { el.remove(); });
+    document.body.appendChild(el);
+  }
+
+  document.getElementById('bloomBtn').addEventListener('click', function () {
+    intro.classList.add('hide');
+    document.body.classList.add('go');
+    setTimeout(function () {
+      fxTimer = setInterval(spawnPetal, 500);
+      heartTimer = setInterval(spawnHeart, 900);
+    }, 6200);
+    setTimeout(function () { replay.classList.add('show'); }, 9000);
+  });
+
+  replay.addEventListener('click', function () { location.reload(); });
+})();
+</script>
+</body>
+</html>
